@@ -19,21 +19,30 @@ app.use(express.json({ limit: "50mb" }));
 app.use(cookieParser());
 
 // cors => cross origin resource sharing
-// origin: process.env.ORIGIN,
 app.use(
     cors({
-        origin: ['http://localhost:3000', "https://elearninglms.netlify.app"],
+        origin: process.env.NODE_ENV === 'production' 
+            ? ['https://elearninglms.netlify.app']
+            : ['http://localhost:3000'],
         credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
     })
 );
 // app.use(cors({ origin: process.env.ORIGIN, credentials: true, }))
 
 // api requests limit
 const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 100,
-    standardHeaders: 'draft-7',
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: process.env.NODE_ENV === 'production' ? 100 : 200, // limit each IP to 100 requests per windowMs in production
+    standardHeaders: true,
     legacyHeaders: false,
+    message: 'Too many requests from this IP, please try again after 15 minutes',
+    skipFailedRequests: true,
+    keyGenerator: (req: Request): string => {
+        const ip = req.ip || req.headers['x-forwarded-for'];
+        return Array.isArray(ip) ? ip[0] : ip || 'unknown';
+    }
 })
 
 // routes

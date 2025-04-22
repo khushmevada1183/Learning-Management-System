@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 node_modules
 .next
 # Logs
@@ -26,3 +27,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+=======
+client/.next
+client/node_modules
+server/node_modules
+>>>>>>> 9f37a818f43eb8251bc302fa2c51f860eac78265
