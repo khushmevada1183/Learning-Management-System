@@ -6,10 +6,11 @@ import { ThemeProvider } from "./utils/theme-provider";
 import { Toaster } from "react-hot-toast";
 import { Providers } from "./Provider";
 import { SessionProvider } from "next-auth/react";
-import React, { FC, useEffect } from "react";
+import React, { FC, useEffect, useState } from "react";
 import { useLoadUserQuery } from "@/redux/features/api/apiSlice";
 import Loader from "./components/Loader/Loader";
 import socketIO from "socket.io-client";
+
 const ENDPOINT = process.env.NEXT_PUBLIC_SOCKET_SERVER_URI || "";
 const socketId = socketIO(ENDPOINT, { transports: ["websocket"] });
 
@@ -25,13 +26,23 @@ const josefin = Josefin_Sans({
   variable: "--font-Josefin",
 });
 
-export default function RootLayout({
-  children,
-}: {
+interface RootLayoutProps {
   children: React.ReactNode;
-}) {
+}
+
+export default function RootLayout({ children }: RootLayoutProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return null;
+  }
+
   return (
-    <html lang="en" suppressHydrationWarning={true}>
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${poppins.variable} ${josefin.variable} !bg-white bg-no-repeat dark:bg-gradient-to-b dark:from-gray-900 dark:to-black duration-300`}
       >
@@ -50,11 +61,21 @@ export default function RootLayout({
   );
 }
 
-const Custom: FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isLoading } = useLoadUserQuery({});
+interface CustomProps {
+  children: React.ReactNode;
+}
+
+const Custom: FC<CustomProps> = ({ children }) => {
+  const { isLoading } = useLoadUserQuery(undefined);
 
   useEffect(() => {
-    socketId.on("connection", () => { });
+    socketId.on("connection", () => {});
+    
+    // Cleanup socket connection on component unmount
+    return () => {
+      socketId.off("connection");
+      socketId.disconnect();
+    };
   }, []);
 
   return <>{isLoading ? <Loader /> : <div>{children}</div>}</>;
