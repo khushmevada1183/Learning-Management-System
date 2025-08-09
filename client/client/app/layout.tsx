@@ -6,11 +6,10 @@ import { ThemeProvider } from "./utils/theme-provider";
 import { Toaster } from "react-hot-toast";
 import { Providers } from "./Provider";
 import { SessionProvider } from "next-auth/react";
-import React, { FC, useEffect, useState } from "react";
+import React, { FC, useEffect } from "react";
 import { useLoadUserQuery } from "@/redux/features/api/apiSlice";
 import Loader from "./components/Loader/Loader";
 import socketIO from "socket.io-client";
-
 const ENDPOINT = process.env.NEXT_PUBLIC_SOCKET_SERVER_URI || "";
 const socketId = socketIO(ENDPOINT, { transports: ["websocket"] });
 
@@ -26,23 +25,13 @@ const josefin = Josefin_Sans({
   variable: "--font-Josefin",
 });
 
-interface RootLayoutProps {
+export default function RootLayout({
+  children,
+}: {
   children: React.ReactNode;
-}
-
-export default function RootLayout({ children }: RootLayoutProps) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    return null;
-  }
-
+}) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning={true}>
       <body
         className={`${poppins.variable} ${josefin.variable} !bg-white bg-no-repeat dark:bg-gradient-to-b dark:from-gray-900 dark:to-black duration-300`}
       >
@@ -61,21 +50,11 @@ export default function RootLayout({ children }: RootLayoutProps) {
   );
 }
 
-interface CustomProps {
-  children: React.ReactNode;
-}
-
-const Custom: FC<CustomProps> = ({ children }) => {
-  const { isLoading } = useLoadUserQuery(undefined);
+const Custom: FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isLoading } = useLoadUserQuery({});
 
   useEffect(() => {
-    socketId.on("connection", () => {});
-    
-    // Cleanup socket connection on component unmount
-    return () => {
-      socketId.off("connection");
-      socketId.disconnect();
-    };
+    socketId.on("connection", () => { });
   }, []);
 
   return <>{isLoading ? <Loader /> : <div>{children}</div>}</>;
